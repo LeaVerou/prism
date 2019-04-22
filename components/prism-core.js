@@ -18,6 +18,36 @@ var Prism = (function (_self){
 var lang = /\blang(?:uage)?-([\w-]+)\b/i;
 var uniqueId = 0;
 
+
+/**
+ * Joins adjacent string in the given array array leaving every other item as is.
+ *
+ * @param {T[]} array The string containing array.
+ * @returns {T[]}
+ * @template T
+ * @example
+ * joinStrings([1, 'foo', 'bar']) -> [1, 'foobar']
+ */
+function joinStrings(array) {
+	var res = [];
+	var previousWasString = false;
+	for (var i = 0, l = array.length; i < l; i++) {
+		var a = array[i];
+		if (typeof a === 'string') {
+			if (previousWasString) {
+				res.push(res.pop() + a);
+			} else {
+				res.push(a);
+			}
+			previousWasString = true;
+		} else {
+			res.push(a);
+			previousWasString = false;
+		}
+	}
+	return res;
+}
+
 var _ = {
 	manual: _self.Prism && _self.Prism.manual,
 	disableWorkerMessageHandler: _self.Prism && _self.Prism.disableWorkerMessageHandler,
@@ -82,6 +112,47 @@ var _ = {
 				default:
 					return o;
 			}
+		},
+
+		/**
+		 * Returns the list of offsets for the groups of the given RegExp match.
+		 *
+		 * Groups which were not captured will have an offset of `-1`.
+		 *
+		 * All groups are assumed to be disjoint.
+		 *
+		 * This is only an approximation of the real offsets and may not return the correct offset for some groups.
+		 *
+		 * @param {RegExpMatchArray} match The RegExp match.
+		 * @returns {number[]} The list of offsets.
+		 * @example
+		 * getOffsets(/(a)b(c)(d)?/.exec("abc")) -> [0, 2, -1]
+		 */
+		getOffsets: function (match) {
+			var $_ = match[0];
+			var offsets = [0];
+			var start = 0;
+
+			for (var i = 1; i < match.length; i++) {
+				var $i = match[i];
+
+				// failed to match this group
+				if ($i === undefined) {
+					offsets.push(-1);
+					continue;
+				}
+
+				var index = $_.indexOf($i, start);
+
+				// not found
+				if (index < 0) {
+					throw new Error('The pattern matching "' + $_ + '" is not allowed to contain nested groups.');
+				}
+
+				offsets.push(index);
+				start = index + $i.length;
+			}
+			return offsets;
 		}
 	},
 
@@ -278,6 +349,8 @@ var _ = {
 	},
 
 	matchGrammar: function (text, strarr, grammar, index, startPos, oneshot, target) {
+		var tokenize = _.tokenize;
+
 		for (var token in grammar) {
 			if(!grammar.hasOwnProperty(token) || !grammar[token]) {
 				continue;
@@ -293,6 +366,7 @@ var _ = {
 			for (var j = 0; j < patterns.length; ++j) {
 				var pattern = patterns[j],
 					inside = pattern.inside,
+					groups = pattern.groups,
 					lookbehind = !!pattern.lookbehind,
 					greedy = !!pattern.greedy,
 					lookbehindLength = 0,
@@ -370,8 +444,8 @@ var _ = {
 					}
 
 					var from = match.index + lookbehindLength,
-					    match = match[0].slice(lookbehindLength),
-					    to = from + match.length,
+					    matchStr = match[0].slice(lookbehindLength),
+					    to = from + matchStr.length,
 					    before = str.slice(0, from),
 					    after = str.slice(to);
 
@@ -383,9 +457,61 @@ var _ = {
 						args.push(before);
 					}
 
-					var wrapped = new Token(token, inside? _.tokenize(match, inside) : match, alias, match, greedy);
+					var tokenContent;
+					if (groups) {
+						var content = [];
+						var offsets = _.util.getOffsets(match);
+						var start = 0;
 
-					args.push(wrapped);
+						for (var g = 1 + lookbehind; g < match.length; g++) {
+							var group = groups['$' + g];
+							var offset = offsets[g] - lookbehindLength;
+							var $g = match[g];
+
+
+							if (!group || !$g) {
+								// ignore empty/unmatched groups and groups which do not have an entry in `groups`
+								continue;
+							}
+
+							if (start < offset) {
+								content.push(matchStr.substring(start, offset));
+							}
+							start = offset + $g.length;
+
+							if (typeof group === 'string') {
+								content.push(new Token(group, $g, undefined, $g, false));
+							} else if (Array.isArray(group)) {
+								content.push(new Token(group[0], $g, group.slice(1), $g, false));
+							} else {
+								content.push.apply(content, tokenize($g, group));
+							}
+						}
+
+						if (start < matchStr.length) {
+							content.push(matchStr.substr(start));
+						}
+
+						content = joinStrings(content);
+
+						if (inside) {
+							var newContent = [];
+							for (var g = 0, l = content.length; g < l; g++) {
+								if (typeof content[g] === 'string') {
+									newContent.push.apply(newContent, tokenize(content[g], inside));
+								} else {
+									newContent.push(content[g]);
+								}
+							}
+							content = newContent;
+						}
+
+						tokenContent = content;
+					} else {
+						tokenContent = inside ? tokenize(matchStr, inside) : matchStr;
+					}
+
+					args.push(new Token(token, tokenContent, alias, matchStr, greedy));
 
 					if (after) {
 						args.push(after);
