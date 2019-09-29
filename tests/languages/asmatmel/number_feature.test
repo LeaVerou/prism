@@ -1,0 +1,18 @@
+LD #127
+ST $8000
+LD #%10001010
+
+-------------------------
+
+[
+	["opcode", "LD"],
+	["decimalnumber", "#127"],
+	["opcode", "ST"],
+	["hexnumber", "$8000"],
+	["opcode", "LD"],
+	["binarynumber", "#%10001010"]
+]
+
+-------------------------
+
+Check for numbers

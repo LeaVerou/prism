@@ -29,6 +29,7 @@
 		"adoc": "AsciiDoc",
 		"asm6502": "6502 Assembly",
 		"aspnet": "ASP.NET (C#)",
+		"asmatmel": "Atmel AVR Assembly",
 		"autohotkey": "AutoHotkey",
 		"autoit": "AutoIt",
 		"shell": "Bash",
