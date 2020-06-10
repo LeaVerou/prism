@@ -62,7 +62,10 @@
 			"javadoclike"
 		],
 		"js-extras": "javascript",
-		"js-templates": "javascript",
+		"js-templates": [
+			"javascript",
+			"templating"
+		],
 		"jsonp": "json",
 		"json5": "json",
 		"kotlin": "clike",
@@ -74,7 +77,10 @@
 		"less": "css",
 		"lilypond": "scheme",
 		"markdown": "markup",
-		"markup-templating": "markup",
+		"markup-templating": [
+			"markup",
+			"templating"
+		],
 		"n4js": "javascript",
 		"nginx": "clike",
 		"objectivec": "c",
