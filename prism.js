@@ -63,14 +63,8 @@ var _ = {
 	 * @memberof Prism
 	 */
 	util: {
-		encode: function encode(tokens) {
-			if (tokens instanceof Token) {
-				return new Token(tokens.type, encode(tokens.content), tokens.alias);
-			} else if (Array.isArray(tokens)) {
-				return tokens.map(encode);
-			} else {
-				return tokens.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/\u00a0/g, ' ');
-			}
+		encode: function (str) {
+			return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/\u00a0/g, ' ');
 		},
 
 		/**
@@ -612,7 +606,7 @@ var _ = {
 		_.hooks.run('before-tokenize', env);
 		env.tokens = _.tokenize(env.code, env.grammar);
 		_.hooks.run('after-tokenize', env);
-		return Token.stringify(_.util.encode(env.tokens), env.language);
+		return Token.stringify(env.tokens, env.language);
 	},
 
 	/**
@@ -790,7 +784,7 @@ function Token(type, content, alias, matchedStr) {
  */
 Token.stringify = function stringify(o, language) {
 	if (typeof o == 'string') {
-		return o;
+		return _.util.encode(o);
 	}
 	if (Array.isArray(o)) {
 		var s = '';
