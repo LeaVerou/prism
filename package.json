@@ -4,8 +4,10 @@
   "description": "Lightweight, robust, elegant syntax highlighting. A spin-off project from Dabblet.",
   "main": "prism.js",
   "style": "themes/prism.css",
+  "bin": "./bin/dist/index.js",
   "scripts": {
     "build": "gulp",
+    "build:cli": "ncc build bin/src/cli.js -o bin/dist",
     "start": "http-server -c-1",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
@@ -18,7 +20,8 @@
     "test:patterns": "mocha tests/pattern-tests.js",
     "test:plugins": "mocha tests/plugins/**/*.js",
     "test:runner": "mocha tests/testrunner-tests.js",
-    "test": "npm run test:runner && npm run test:core && npm run test:dependencies && npm run test:languages && npm run test:plugins && npm run test:aliases && npm run test:patterns && npm run test:examples && npm run test:identifiers"
+    "test": "npm run test:runner && npm run test:core && npm run test:dependencies && npm run test:languages && npm run test:plugins && npm run test:aliases && npm run test:patterns && npm run test:examples && npm run test:identifiers",
+    "prepublishOnly": "npm run build:cli"
   },
   "repository": {
     "type": "git",
@@ -32,6 +35,7 @@
   "license": "MIT",
   "readmeFilename": "README.md",
   "devDependencies": {
+    "@vercel/ncc": "^0.26.1",
     "chai": "^4.2.0",
     "danger": "^10.5.0",
     "del": "^4.1.1",
@@ -55,7 +59,7 @@
     "scslre": "^0.1.1",
     "simple-git": "^1.107.0",
     "webfont": "^9.0.0",
-    "yargs": "^13.2.2"
+    "yargs": "^16.1.0"
   },
   "jspm": {
     "main": "prism",
