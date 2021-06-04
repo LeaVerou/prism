@@ -1,12 +1,14 @@
 'use strict';
 
 const fs = require('fs');
+const path = require('path');
 const { assert } = require('chai');
 const PrismLoader = require('./prism-loader');
 const TokenStreamTransformer = require('./token-stream-transformer');
 
 /**
  * @typedef {import("./token-stream-transformer").TokenStream} TokenStream
+ * @typedef {import("./prism-loader").PrismInstance} PrismInstance
  */
 
 /**
@@ -34,10 +36,34 @@ const TokenStreamTransformer = require('./token-stream-transformer');
  * If the file contains more than three parts, the remaining parts are just ignored.
  * If the file however does not contain at least two parts (so no expected token stream),
  * the test case will later be marked as failed.
- *
- *
  */
 module.exports = {
+
+	/**
+	 * Runs the given test file and asserts the result.
+	 *
+	 * This function will determine what kind of test files the given file is and call the appropriate method to run the
+	 * test.
+	 *
+	 * @param {RunOptions} options
+	 * @returns {void}
+	 *
+	 * @typedef RunOptions
+	 * @property {string} languageIdentifier
+	 * @property {string} filePath
+	 * @property {"none" | "insert" | "update"} updateMode
+	 * @property {(languages: string[]) => PrismInstance} [createInstance]
+	 */
+	run(options) {
+		if (path.extname(options.filePath) === '.test') {
+			this.runTestCase(options);
+		} else {
+			this.runTestsWithHooks({
+				...options,
+				codes: require(options.filePath)
+			});
+		}
+	},
 
 	/**
 	 * Runs the given test case file and asserts the result
@@ -51,15 +77,15 @@ module.exports = {
 	 *
 	 * The languages will be loaded in the order they were provided.
 	 *
-	 * @param {string} languageIdentifier
-	 * @param {string} filePath
-	 * @param {"none" | "insert" | "update"} updateMode
+	 * @param {RunOptions} param0
 	 */
-	runTestCase(languageIdentifier, filePath, updateMode) {
+	runTestCase({ languageIdentifier, filePath, updateMode, createInstance }) {
 		const testCase = this.parseTestCaseFile(filePath);
 		const usedLanguages = this.parseLanguageNames(languageIdentifier);
 
-		const Prism = PrismLoader.createInstance(usedLanguages.languages);
+		const Prism = createInstance
+			? createInstance(usedLanguages.languages)
+			: PrismLoader.createInstance(usedLanguages.languages);
 
 		// the first language is the main language to highlight
 		const tokenStream = this.tokenize(Prism, testCase.code, usedLanguages.mainLanguage);
@@ -132,7 +158,7 @@ module.exports = {
 	 *
 	 * The `before-tokenize` and `after-tokenize` hooks will also be executed.
 	 *
-	 * @param {import('../../components/prism-core')} Prism The Prism instance which will tokenize `code`.
+	 * @param {PrismInstance} Prism The Prism instance which will tokenize `code`.
 	 * @param {string} code The code to tokenize.
 	 * @param {string} language The language id.
 	 * @returns {TokenStream}
@@ -236,12 +262,15 @@ module.exports = {
 	 *
 	 * Code is provided as the key and expected result as the value.
 	 *
-	 * @param {string} languageIdentifier
-	 * @param {object} codes
+	 * @param {RunOptions & { codes: Object<string, string> }} param0
 	 */
-	runTestsWithHooks(languageIdentifier, codes) {
+	runTestsWithHooks({ languageIdentifier, codes, createInstance }) {
 		const usedLanguages = this.parseLanguageNames(languageIdentifier);
-		const Prism = PrismLoader.createInstance(usedLanguages.languages);
+
+		const Prism = createInstance
+			? createInstance(usedLanguages.languages)
+			: PrismLoader.createInstance(usedLanguages.languages);
+
 		// the first language is the main language to highlight
 
 		for (const code in codes) {

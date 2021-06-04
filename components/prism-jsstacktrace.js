@@ -19,7 +19,7 @@ Prism.languages.jsstacktrace = {
 			},
 
 			'function': {
-				pattern: /(at\s+(?:new\s+)?)(?!\s)[_$a-zA-Z\xA0-\uFFFF<][.$\w\xA0-\uFFFF<>]*/,
+				pattern: /(\bat\s+(?:new\s+)?)(?!\s)[_$a-zA-Z\xA0-\uFFFF<][.$\w\xA0-\uFFFF<>]*/,
 				lookbehind: true,
 				inside: {
 					'punctuation': /\./

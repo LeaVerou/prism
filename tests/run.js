@@ -8,34 +8,24 @@ const { argv } = require('yargs');
 
 const testSuite =
 	(argv.language)
-		? TestDiscovery.loadSomeTests(__dirname + '/languages', argv.language)
+		? TestDiscovery.loadSomeTests(argv.language)
 		// load complete test suite
-		: TestDiscovery.loadAllTests(__dirname + '/languages');
+		: TestDiscovery.loadAllTests();
 
 const insert = !!argv.accept || !!argv.insert;
 const update = !!argv.update;
 
 // define tests for all tests in all languages in the test suite
-for (const language in testSuite) {
-	if (!testSuite.hasOwnProperty(language)) {
-		continue;
-	}
+for (const [languageIdentifier, files] of testSuite) {
+	describe("Testing language '" + languageIdentifier + "'", function () {
+		this.timeout(10 * 1000);
 
-	(function (language, testFiles) {
-		describe("Testing language '" + language + "'", function () {
-			this.timeout(10000);
+		for (const filePath of files) {
+			const fileName = path.basename(filePath, path.extname(filePath));
 
-			for (const filePath of testFiles) {
-				const fileName = path.basename(filePath, path.extname(filePath));
-
-				it("– should pass test case '" + fileName + "'", function () {
-					if (path.extname(filePath) === '.test') {
-						TestCase.runTestCase(language, filePath, update ? 'update' : insert ? 'insert' : 'none');
-					} else {
-						TestCase.runTestsWithHooks(language, require(filePath));
-					}
-				});
-			}
-		});
-	}(language, testSuite[language]));
+			it("– should pass test case '" + fileName + "'", function () {
+				TestCase.run({ languageIdentifier, filePath, updateMode: update ? 'update' : insert ? 'insert' : 'none' });
+			});
+		}
+	});
 }
