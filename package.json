@@ -5,6 +5,7 @@
   "main": "prism.js",
   "style": "themes/prism.css",
   "scripts": {
+    "benchmark": "node benchmark/benchmark.js",
     "build": "gulp",
     "start": "http-server -c-1",
     "lint": "eslint .",
@@ -33,6 +34,8 @@
   "license": "MIT",
   "readmeFilename": "README.md",
   "devDependencies": {
+    "@types/node-fetch": "^2.5.5",
+    "benchmark": "^2.1.4",
     "chai": "^4.2.0",
     "danger": "^10.5.0",
     "del": "^4.1.1",
@@ -51,6 +54,7 @@
     "http-server": "^0.12.3",
     "jsdom": "^13.0.0",
     "mocha": "^6.2.0",
+    "node-fetch": "^2.6.0",
     "pump": "^3.0.0",
     "refa": "^0.8.0",
     "regexpp": "^3.1.0",
